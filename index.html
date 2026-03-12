@@ -17,44 +17,53 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #2c3e50; display: flex; justify-content: center; align-items: center;
             z-index: 1000; flex-direction: column; color: white;
+            text-align: center; padding: 20px; box-sizing: border-box;
         }
-        #loginScreen input { padding: 10px; margin: 10px; border-radius: 5px; border: none; font-size: 16px; }
-        #loginScreen button { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #loginScreen input { padding: 10px; margin: 10px; border-radius: 5px; border: none; font-size: 16px; width: 90%; max-width: 300px; box-sizing: border-box; }
+        #loginScreen button { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; width: 90%; max-width: 300px; font-size: 16px; }
         
-        /* القائمة الجانبية الثابتة */
+        /* التبويبات السفلية الثابتة للهاتف */
         .sidebar {
-            width: 200px; background-color: #2c3e50; position: fixed; height: 100%; top: 0; right: 0;
-            padding-top: 20px; display: flex; flex-direction: column;
+            width: 100%; background-color: #2c3e50; position: fixed; height: auto; bottom: 0; top: auto; right: 0; left: 0;
+            padding-top: 0; display: flex; flex-direction: row; z-index: 1000; justify-content: space-around;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+        }
+        .sidebar h3 {
+            display: none;
         }
         .sidebar button {
-            background: none; color: white; border: none; padding: 15px; text-align: right;
-            font-size: 16px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #34495e;
+            background: none; color: white; border: none; padding: 10px 5px; text-align: center;
+            font-size: 11px; cursor: pointer; transition: 0.3s; border-bottom: none; flex: 1; border-left: 1px solid #34495e;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 0 !important;
+        }
+        .sidebar button:last-child {
+            border-left: none;
         }
         .sidebar button:hover { background-color: #34495e; }
         
         /* المحتوى الرئيسي */
-        .content { margin-right: 200px; padding: 20px; display: none; }
+        .content { margin-right: 0; margin-bottom: 70px; padding: 15px; display: none; }
         .active-section { display: block; }
         
         /* تصميم النماذج والبطاقات */
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; display: inline-block; width: 48%; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; overflow-x: auto; }
+        .form-group { margin-bottom: 15px; display: block; width: 100%; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         
-        .btn-save { background: #2980b9; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;}
+        .btn-save { background: #2980b9; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; display: block;}
         .btn-danger { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;}
         .btn-backup { background: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px;}
         
         /* تصميم الجداول */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
         table, th, td { border: 1px solid #ddd; }
-        th, td { padding: 10px; text-align: center; }
+        th, td { padding: 10px; text-align: center; font-size: 14px; }
         th { background-color: #2c3e50; color: white; }
         
         /* التقارير */
-        .report-cards { display: flex; gap: 20px; }
-        .report-card { background: #27ae60; color: white; padding: 20px; border-radius: 8px; flex: 1; text-align: center; font-size: 20px;}
+        .report-cards { display: flex; flex-direction: column; gap: 15px; }
+        .report-card { background: #27ae60; color: white; padding: 20px; border-radius: 8px; text-align: center; font-size: 20px;}
         
         /* التنبيهات */
         .debt-row { background-color: #ffeaea; } /* لون أحمر خفيف للمعاملات غير المكتملة */
@@ -110,7 +119,7 @@
     <div id="logSection" class="content">
         <h2>سجل المعاملات</h2>
         <div class="card">
-            <input type="text" id="searchInput" placeholder="ابحث باسم التاجر أو رقم البيان..." onkeyup="renderTable()" style="width:50%; padding:8px; margin-bottom:15px;">
+            <input type="text" id="searchInput" placeholder="ابحث باسم التاجر أو رقم البيان..." onkeyup="renderTable()" style="width:100%; padding:10px; margin-bottom:15px; box-sizing:border-box;">
             <table>
                 <thead>
                     <tr>
@@ -169,6 +178,7 @@
                 renderTable();
                 generateReports();
             }
+            window.scrollTo(0, 0);
         }
 
         // --- 3. العمليات الحسابية الحية ---
