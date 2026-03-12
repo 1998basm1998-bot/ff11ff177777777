@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام التخليص الكمركي</title>
+    <style>
+        /* إعدادات الخطوط والألوان الأساسية */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        /* شاشة تسجيل الدخول */
+        #loginScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50; display: flex; justify-content: center; align-items: center;
+            z-index: 1000; flex-direction: column; color: white;
+        }
+        #loginScreen input { padding: 10px; margin: 10px; border-radius: 5px; border: none; font-size: 16px; }
+        #loginScreen button { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        
+        /* القائمة الجانبية الثابتة */
+        .sidebar {
+            width: 200px; background-color: #2c3e50; position: fixed; height: 100%; top: 0; right: 0;
+            padding-top: 20px; display: flex; flex-direction: column;
+        }
+        .sidebar button {
+            background: none; color: white; border: none; padding: 15px; text-align: right;
+            font-size: 16px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #34495e;
+        }
+        .sidebar button:hover { background-color: #34495e; }
+        
+        /* المحتوى الرئيسي */
+        .content { margin-right: 200px; padding: 20px; display: none; }
+        .active-section { display: block; }
+        
+        /* تصميم النماذج والبطاقات */
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; display: inline-block; width: 48%; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .btn-save { background: #2980b9; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;}
+        .btn-danger { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;}
+        .btn-backup { background: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px;}
+        
+        /* تصميم الجداول */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 10px; text-align: center; }
+        th { background-color: #2c3e50; color: white; }
+        
+        /* التقارير */
+        .report-cards { display: flex; gap: 20px; }
+        .report-card { background: #27ae60; color: white; padding: 20px; border-radius: 8px; flex: 1; text-align: center; font-size: 20px;}
+        
+        /* التنبيهات */
+        .debt-row { background-color: #ffeaea; } /* لون أحمر خفيف للمعاملات غير المكتملة */
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen">
+        <h2>نظام إدارة التخليص الكمركي</h2>
+        <p>الرجاء إدخال كلمة المرور (الافتراضية: 1234)</p>
+        <input type="password" id="passwordInput" placeholder="كلمة المرور...">
+        <button onclick="checkLogin()">تسجيل الدخول</button>
+        <p id="loginError" style="color:#e74c3c; display:none;">كلمة المرور خاطئة!</p>
+    </div>
+
+    <div class="sidebar" id="sidebar" style="display:none;">
+        <h3 style="color:white; text-align:center;">نظام الكمارك</h3>
+        <button onclick="showSection('addSection')">➕ إضافة معاملة</button>
+        <button onclick="showSection('logSection')">📜 سجل المعاملات</button>
+        <button onclick="showSection('reportsSection')">📊 التقارير والإحصائيات</button>
+        <button onclick="exportBackup()">💾 نسخة احتياطية</button>
+    </div>
+
+    <div id="addSection" class="content">
+        <h2>إضافة معاملة جديدة</h2>
+        <div class="card">
+            <div class="form-group"><label>اسم التاجر/الزبون</label><input type="text" id="clientName"></div>
+            <div class="form-group"><label>رقم البيان الكمركي</label><input type="text" id="decNumber"></div>
+            <div class="form-group"><label>نوع البضاعة</label><input type="text" id="goodsType"></div>
+            <div class="form-group"><label>تاريخ المعاملة</label><input type="date" id="transDate"></div>
+            <div class="form-group"><label>المنفذ الحدودي/الميناء</label><input type="text" id="portName"></div>
+            
+            <hr>
+            <h3>الحسابات (اكتب المبالغ ليتم الحساب تلقائياً)</h3>
+            <div class="form-group"><label>مبلغ الكمرك</label><input type="number" id="customsFee" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>أجور النقل</label><input type="number" id="transportFee" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>مصاريف أخرى</label><input type="number" id="otherFee" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>أجور التخليص (ربحك)</label><input type="number" id="clearanceFee" value="0" oninput="calculate()"></div>
+            <div class="form-group"><label>المبلغ المستلم من الزبون</label><input type="number" id="receivedAmount" value="0" oninput="calculate()"></div>
+            
+            <div style="background:#e8f4f8; padding:15px; border-radius:5px; margin-top:10px;">
+                <p><strong>مجموع المصاريف: </strong> <span id="totalExpensesOutput">0</span></p>
+                <p><strong>المبلغ الكلي المطلوب: </strong> <span id="totalRequiredOutput">0</span></p>
+                <p><strong>الربح الصافي: </strong> <span id="netProfitOutput">0</span></p>
+                <p><strong>المتبقي في ذمة الزبون (ديون): </strong> <span id="debtOutput" style="color:red;">0</span></p>
+            </div>
+            
+            <br>
+            <button class="btn-save" onclick="saveTransaction()">حفظ المعاملة</button>
+        </div>
+    </div>
+
+    <div id="logSection" class="content">
+        <h2>سجل المعاملات</h2>
+        <div class="card">
+            <input type="text" id="searchInput" placeholder="ابحث باسم التاجر أو رقم البيان..." onkeyup="renderTable()" style="width:50%; padding:8px; margin-bottom:15px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم التاجر</th>
+                        <th>رقم البيان</th>
+                        <th>التاريخ</th>
+                        <th>المبلغ المطلوب</th>
+                        <th>المستلم</th>
+                        <th>المتبقي (الديون)</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="reportsSection" class="content">
+        <h2>التقارير والإحصائيات</h2>
+        <div class="report-cards">
+            <div class="report-card" style="background:#3498db;">
+                <h4>عدد المعاملات</h4>
+                <p id="repCount">0</p>
+            </div>
+            <div class="report-card" style="background:#e67e22;">
+                <h4>مجموع المصاريف</h4>
+                <p id="repExpenses">0</p>
+            </div>
+            <div class="report-card" style="background:#27ae60;">
+                <h4>الربح الصافي الكلي</h4>
+                <p id="repProfit">0</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. الأمان وتسجيل الدخول ---
+        function checkLogin() {
+            let pass = document.getElementById('passwordInput').value;
+            if(pass === '1234') { // يمكن تغيير كلمة المرور هنا
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('sidebar').style.display = 'flex';
+                showSection('addSection');
+                loadData(); // تحميل البيانات المحفوظة
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        // --- 2. التنقل بين الواجهات ---
+        function showSection(sectionId) {
+            document.querySelectorAll('.content').forEach(div => div.classList.remove('active-section'));
+            document.getElementById(sectionId).classList.add('active-section');
+            if(sectionId === 'logSection' || sectionId === 'reportsSection') {
+                renderTable();
+                generateReports();
+            }
+        }
+
+        // --- 3. العمليات الحسابية الحية ---
+        function calculate() {
+            let customs = parseFloat(document.getElementById('customsFee').value) || 0;
+            let transport = parseFloat(document.getElementById('transportFee').value) || 0;
+            let other = parseFloat(document.getElementById('otherFee').value) || 0;
+            let clearance = parseFloat(document.getElementById('clearanceFee').value) || 0;
+            let received = parseFloat(document.getElementById('receivedAmount').value) || 0;
+
+            let totalExpenses = customs + transport + other;
+            let totalRequired = totalExpenses + clearance; // المبلغ المطلوب من التاجر
+            let debt = totalRequired - received;
+            let netProfit = clearance; // الربح هو أجور التخليص
+
+            document.getElementById('totalExpensesOutput').innerText = totalExpenses;
+            document.getElementById('totalRequiredOutput').innerText = totalRequired;
+            document.getElementById('netProfitOutput').innerText = netProfit;
+            document.getElementById('debtOutput').innerText = debt > 0 ? debt : 0;
+        }
+
+        // --- 4. إدارة البيانات (حفظ، عرض، حذف) ---
+        let transactions = [];
+
+        function loadData() {
+            let saved = localStorage.getItem('customsData');
+            if(saved) transactions = JSON.parse(saved);
+        }
+
+        function saveTransaction() {
+            let clientName = document.getElementById('clientName').value;
+            let decNumber = document.getElementById('decNumber').value;
+            if(!clientName || !decNumber) { alert("يرجى إدخال اسم التاجر ورقم البيان على الأقل!"); return; }
+
+            // تجميع البيانات في كائن (Object)
+            let newTrans = {
+                id: Date.now(), // رقم تعريفي فريد
+                clientName: clientName,
+                decNumber: decNumber,
+                goodsType: document.getElementById('goodsType').value,
+                transDate: document.getElementById('transDate').value,
+                totalRequired: parseFloat(document.getElementById('totalRequiredOutput').innerText),
+                received: parseFloat(document.getElementById('receivedAmount').value) || 0,
+                debt: parseFloat(document.getElementById('debtOutput').innerText),
+                expenses: parseFloat(document.getElementById('totalExpensesOutput').innerText),
+                profit: parseFloat(document.getElementById('netProfitOutput').innerText)
+            };
+
+            transactions.push(newTrans);
+            localStorage.setItem('customsData', JSON.stringify(transactions)); // حفظ في المتصفح
+            alert("تم حفظ المعاملة بنجاح!");
+            
+            // تصفير الحقول
+            document.querySelectorAll('input[type="text"], input[type="date"]').forEach(i => i.value = '');
+            document.querySelectorAll('input[type="number"]').forEach(i => i.value = '0');
+            calculate();
+        }
+
+        function renderTable() {
+            let tbody = document.getElementById('transactionsTableBody');
+            let searchQ = document.getElementById('searchInput').value.toLowerCase();
+            tbody.innerHTML = ''; // مسح الجدول القديم
+
+            transactions.forEach(t => {
+                // البحث والتصفية
+                if(t.clientName.toLowerCase().includes(searchQ) || t.decNumber.includes(searchQ)) {
+                    let tr = document.createElement('tr');
+                    // التنبيه (تلوين الصف إذا كان هناك ديون)
+                    if(t.debt > 0) tr.classList.add('debt-row'); 
+                    
+                    tr.innerHTML = `
+                        <td>${t.clientName}</td>
+                        <td>${t.decNumber}</td>
+                        <td>${t.transDate}</td>
+                        <td>${t.totalRequired}</td>
+                        <td>${t.received}</td>
+                        <td style="color:red; font-weight:bold;">${t.debt}</td>
+                        <td><button class="btn-danger" onclick="deleteTransaction(${t.id})">حذف</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        function deleteTransaction(id) {
+            if(confirm("هل أنت متأكد من حذف هذه المعاملة؟")) {
+                transactions = transactions.filter(t => t.id !== id);
+                localStorage.setItem('customsData', JSON.stringify(transactions));
+                renderTable();
+                generateReports();
+            }
+        }
+
+        // --- 5. التقارير ---
+        function generateReports() {
+            let totalProfit = 0, totalExpenses = 0;
+            transactions.forEach(t => {
+                totalProfit += t.profit;
+                totalExpenses += t.expenses;
+            });
+            document.getElementById('repCount').innerText = transactions.length;
+            document.getElementById('repExpenses').innerText = totalExpenses;
+            document.getElementById('repProfit').innerText = totalProfit;
+        }
+
+        // --- 6. النسخ الاحتياطي ---
+        function exportBackup() {
+            let dataStr = JSON.stringify(transactions);
+            let dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            let exportFileDefaultName = 'customs_backup.json';
+            let linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+    </script>
+</body>
+</html>
